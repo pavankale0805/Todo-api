@@ -20,7 +20,7 @@ app.get('/todos', function(req, res) {
 	var where = {};
 	if (query.hasOwnProperty('completed') && query.completed === 'true') {
 		where.completed = true;
-	} else if(query.hasOwnProperty('completed') && query.completed === 'false') {
+	} else if (query.hasOwnProperty('completed') && query.completed === 'false') {
 		where.completed = false;
 	}
 
@@ -30,9 +30,11 @@ app.get('/todos', function(req, res) {
 		};
 	}
 
-	db.todo.findAll({where: where}).then(function(todos) {
+	db.todo.findAll({
+		where: where
+	}).then(function(todos) {
 		res.json(todos);
-	}, function (e) {
+	}, function(e) {
 		res.status(500).send();
 	});
 	/*var queryParams = req.query;
@@ -60,13 +62,13 @@ app.get('/todos', function(req, res) {
 //GET /todos/:id
 app.get('/todos/:id', function(req, res) {
 	var todoId = parseInt(req.params.id, 10);
-	db.todo.findById(todoId).then(function (todo) {
-		if(!!todo) {
+	db.todo.findById(todoId).then(function(todo) {
+		if (!!todo) {
 			res.json(todo.toJSON());
 		} else {
 			res.status(404).send();
 		}
-	}, function (e) {
+	}, function(e) {
 		res.status(500).send();
 	});
 
@@ -84,10 +86,10 @@ app.get('/todos/:id', function(req, res) {
 //POST /todos
 app.post('/todos', function(req, res) {
 	var body = _.pick(req.body, 'description', 'completed');
-	
-	db.todo.create(body).then(function (todo){
+
+	db.todo.create(body).then(function(todo) {
 		res.json(todo.toJSON());
-	}, function (e) {
+	}, function(e) {
 		res.status(400).json(e);
 	});
 	/*if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
@@ -108,15 +110,15 @@ app.delete('/todos/:id', function(req, res) {
 		where: {
 			id: todoId
 		}
-	}).then(function (rowsDeleted) {
-		if(rowsDeleted === 0) {
+	}).then(function(rowsDeleted) {
+		if (rowsDeleted === 0) {
 			res.status(404).json({
-				error : 'No todo with id'
+				error: 'No todo with id'
 			});
 		} else {
 			res.status(204).send();
 		}
-	}, function (e) {
+	}, function(e) {
 		res.status(500).send();
 	});
 	/*var matchedTodo = _.findWhere(todos, {
@@ -136,7 +138,32 @@ app.delete('/todos/:id', function(req, res) {
 //PUT /todos/:id
 app.put('/todos/:id', function(req, res) {
 	var todoId = parseInt(req.params.id, 10);
-	var matchedTodo = _.findWhere(todos, {
+	var body = _.pick(req.body, 'description', 'completed');
+	var attributes = {};
+
+	if (body.hasOwnProperty('completed')) {
+		attributes.completed = body.completed;
+	}
+
+	if (body.hasOwnProperty('description')) {
+		attributes.description = body.description;
+	}
+
+	db.todo.findById(todoId).then(function(todo) {
+		if (todo) {
+			todo.update(attributes).then(function(todo) {
+				res.json(todo.toJSON());
+			}, function(e) {
+				res.status(400).json(e);
+			});
+		} else {
+			res.status(404).send();
+		}
+	}, function() {
+		res.status(500).send();
+	});
+
+	/*var matchedTodo = _.findWhere(todos, {
 		id: todoId
 	});
 	var body = _.pick(req.body, 'description', 'completed');
@@ -160,7 +187,7 @@ app.put('/todos/:id', function(req, res) {
 
 	_.extend(matchedTodo, validAttributes);
 	//Objects in javascript are pass by reference, so no need to update array
-	res.json(matchedTodo);
+	res.json(matchedTodo);*/
 });
 
 db.sequelize.sync().then(function() {
