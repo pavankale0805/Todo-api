@@ -2,13 +2,14 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var _ = require('underscore');
 var db = require('./db.js');
+var bcrypt = require('bcrypt');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
 var todos = [];
 var todoNextId = 1;
 
-app.use(bodyParser.json());
+app.use(bodyParser.json()); //bodyParser act as a middleware
 
 app.get('/', function(req, res) {
 	res.send('TODO API Root');
@@ -149,8 +150,10 @@ app.put('/todos/:id', function(req, res) {
 		attributes.description = body.description;
 	}
 
+	//db.todo.findById() is a model method
 	db.todo.findById(todoId).then(function(todo) {
 		if (todo) {
+			//todo.update() is a instance method
 			todo.update(attributes).then(function(todo) {
 				res.json(todo.toJSON());
 			}, function(e) {
@@ -163,7 +166,9 @@ app.put('/todos/:id', function(req, res) {
 		res.status(500).send();
 	});
 
-	/*var matchedTodo = _.findWhere(todos, {
+	/*
+	var todoId = parseInt(req.params.id, 10);
+	var matchedTodo = _.findWhere(todos, {
 		id: todoId
 	});
 	var body = _.pick(req.body, 'description', 'completed');
@@ -201,7 +206,36 @@ app.post('/users', function (req, res) {
 	});
 });
 
-db.sequelize.sync().then(function() {
+app.post('/users/login', function(req, res) {
+	var body = _.pick(req.body, 'email', 'password');
+
+	db.user.authenticate(body).then(function(user) {
+		res.json(user.toPublicJSON());
+	}, function() {
+		res.status(401).send();
+	});
+
+	/*if (typeof body.email !== 'string' || typeof body.password !== 'string') {
+		return res.status(400).send();
+	}   
+
+	db.user.findOne({
+		where: {
+			email: body.email
+		}
+	}).then(function (user) {
+		if(!user || !bcrypt.compareSync(body.password, user.get('password_hash'))) {
+			return res.status(401).send();
+		}
+
+		res.json(user.toPublicJSON());
+	}, function (e) {
+		res.status(500).send();
+	});*/
+
+});
+
+db.sequelize.sync({force: true}).then(function() {
 	app.listen(PORT, function() {
 		console.log('Express listening on port ' + PORT + '!');
 	});

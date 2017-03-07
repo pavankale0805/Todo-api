@@ -61,3 +61,19 @@ sequelize.sync({
 		console.log(e);
 	});*/
 });
+
+//{force: true} => Drop table if already exist. By default true.
+//Id field is automatically created for each record. 
+/*sequelize.sync({force: true}).then(function() {
+	console.log('Everything is synched');
+
+	Todo.create({
+		description: 'Walking the dog',
+		completed: false
+	}).then(function(todo) {
+		console.log('Finished!');
+		console.log(todo);
+	}).catch(function(e){
+		console.log(e);  
+	});
+});*/
