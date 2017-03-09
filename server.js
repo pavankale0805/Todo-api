@@ -19,7 +19,10 @@ app.get('/', function(req, res) {
 //GET /todos?completed=true&q=work
 app.get('/todos', middleware.requireAuthentication, function(req, res) {
 	var query = req.query;
-	var where = {};
+	var where = {
+		userId: req.user.get('id')
+	};
+
 	if (query.hasOwnProperty('completed') && query.completed === 'true') {
 		where.completed = true;
 	} else if (query.hasOwnProperty('completed') && query.completed === 'false') {
@@ -64,7 +67,12 @@ app.get('/todos', middleware.requireAuthentication, function(req, res) {
 //GET /todos/:id
 app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	var todoId = parseInt(req.params.id, 10);
-	db.todo.findById(todoId).then(function(todo) {
+	db.todo.findOne({
+		where: {
+			id: todoId,
+			userId: req.user.get('id')
+		}
+	}).then(function(todo) {
 		if (!!todo) {
 			res.json(todo.toJSON());
 		} else {
@@ -73,6 +81,16 @@ app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	}, function(e) {
 		res.status(500).send();
 	});
+
+	/*db.todo.findById(todoId).then(function(todo) {
+		if (!!todo) {
+			res.json(todo.toJSON());
+		} else {
+			res.status(404).send();
+		}
+	}, function(e) {
+		res.status(500).send();
+	});*/
 
 	/*var matchedTodo = _.findWhere(todos, {
 		id: todoId
@@ -115,7 +133,8 @@ app.delete('/todos/:id', middleware.requireAuthentication, function(req, res) {
 
 	db.todo.destroy({
 		where: {
-			id: todoId
+			id: todoId,
+			userId: req.user.get('id')
 		}
 	}).then(function(rowsDeleted) {
 		if (rowsDeleted === 0) {
@@ -157,7 +176,12 @@ app.put('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	}
 
 	//db.todo.findById() is a model method
-	db.todo.findById(todoId).then(function(todo) {
+	db.todo.findOne({
+		where: {
+			id: todoId,
+			userId: req.user.get('id')
+		}
+	}).then(function(todo) {
 		if (todo) {
 			//todo.update() is a instance method
 			todo.update(attributes).then(function(todo) {
